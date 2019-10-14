@@ -25,12 +25,17 @@ def initialize(sys_input=False):
     global update_rule
     global alpha
     global writeFile
+    global epochs977
+    global epochs979
 
     sigma=0.001
     batch_size=1000
     update_rule='np-hybrid'
     test_acc=[]
     train_acc=[]
+    epochs977 = []
+    epochs979=[]
+
     seed=0
     alpha=1
     writeFile=False
@@ -54,5 +59,5 @@ def initialize(sys_input=False):
         interval=1
 
 def resetAcc():
-    test_acc=[]
-    train_acc=[]
+    test_acc.clear()
+    train_acc.clear()

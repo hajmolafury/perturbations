@@ -5,6 +5,7 @@
 import tensorflow as tf
 import numpy as np
 import time
+import argparse
 import csv
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -12,7 +13,7 @@ from makeNN import tfGraph
 import globalV
 from fileWriter import write_in_file
 np.set_printoptions(precision=4, suppress=True)
-os.environ["CUDA_VISIBLE_DEVICES"]="2"
+# os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 # In[6]:
 
@@ -24,13 +25,9 @@ x_train_data, x_test_data = x_train_data / 255.0, x_test_data / 255.0
 
 # In[7]:
 
-
 with tf.Session() as sess:
     y_train = sess.run(tf.one_hot(y_train_cold,10))
     y_test =  sess.run(tf.one_hot(y_test_cold,10))
-
-
-# In[8]:
 
 
 x_train=[]
@@ -44,9 +41,6 @@ for i in range(len(x_train_data)):
     
 for i in range(len(x_test_data)):
     x_test.append(np.ndarray.flatten(x_test_data[i]))
-
-
-# In[9]:
 
 
 x_train = np.reshape(x_train,[n_train,784])
@@ -66,56 +60,61 @@ def find_acc(which_acc):
         print('wrong accuracy requested!!')
     return np.mean(acc)
 
-def print_acc():
-    # train_acc.append(find_acc('train'))
-    globalV.test_acc.append(find_acc('test'))
+def sma_accuracy():
+    return np.ma.average(globalV.test_acc[-5:])
+
+def print_accuracy():
     print('epoch : ', i+1, '  test_acc : ', globalV.test_acc[-1])
     sec=int(time.time()-start)
     print(int(sec/60),'m ', int(sec%60),'s')
-
-    return globalV.test_acc[-1]
-
+    return
 
 # In[14]:
 def train_network(num_hidden_layers):
     for j in range(int(n_train/globalV.batch_size)):
         ind = np.random.randint(0, n_train, size=(globalV.batch_size))
 
-        if(globalV.update_rule=='sgd' or globalV.update_rule=='np-hybrid'):
-            ops=['optimizer']
-            sess.run(ops, feed_dict = {'x:0':x_train[ind], 'y:0':y_train[ind]})
+        ops=['optimizer']
+        sess.run(ops, feed_dict = {'x:0':x_train[ind], 'y:0':y_train[ind]})
 
-        if(globalV.update_rule=='ip' or globalV.update_rule=='np' or globalV.update_rule=='np-hybrid'):
-            updates=[]
-            squiggles=[]
-            for i in range(num_hidden_layers+1):
-                updates.append('update_w'+str(i)+':0')
-                updates.append('update_b'+str(i)+':0')
-                squiggles.append('s_'+str(i)+':0')
+        updates=[]
+        squiggles=[]
+        for i in range(num_hidden_layers+1):
+            updates.append('update_w'+str(i)+':0')
+            updates.append('update_b'+str(i)+':0')
+            squiggles.append('s_'+str(i)+':0')
 
-            ops=[squiggles, updates]
-            sess.run(ops, feed_dict = {'x:0':x_train[ind], 'y:0':y_train[ind]})
+        ops=[squiggles, updates]
+        sess.run(ops, feed_dict = {'x:0':x_train[ind], 'y:0':y_train[ind]})
 
     return
 
 # alphaZero is node perturbation.
-failed=False
 
-# In[17]:
 start=time.time()
 globalV.initialize()
 dir='/nfs/nhome/live/yashm/Desktop/code/git/perturbations/np-hybrid.csv'
 
-# globalV.learning_rate=5.0
-globalV.n_seeds=1
-globalV.alpha=1
-globalV.learning_rate=5
-globalV.n_hl=2
-globalV.n_epochs=50
+ap = argparse.ArgumentParser()
+ap.add_argument("--learning_rate")
+ap.add_argument("--n_hl")
+ap.add_argument("--alpha")
+args = vars(ap.parse_args())
+
+globalV.learning_rate=float(args["learning_rate"])
+globalV.n_hl=int(args["n_hl"])
+globalV.alpha=float(args["alpha"])
+
+globalV.n_seeds=2
+globalV.n_epochs=2500
+globalV.writeFile=True
+onlyEpochs=True
 
 for jj in range(globalV.n_seeds):
+    failed = True
     globalV.resetAcc()
-    #globalV.seed=np.random.randint(0,1000)
+    firstCross=True
+    globalV.seed=np.random.randint(0,1000)
 
     tf.set_random_seed(globalV.seed)
     np.random.seed(globalV.seed)
@@ -124,26 +123,36 @@ for jj in range(globalV.n_seeds):
 
     with tf.Session(graph=objNN.g) as sess:
         sess.run(tf.global_variables_initializer())
-
-        print('TRAINING', '\nwidth : ', globalV.hl_size, '\ndepth : ', globalV.n_hl, '\n')
+        print('TRAINING\nnumber of variables : ', np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()]))
+        print('\nwidth : ', globalV.hl_size, '\ndepth : ', globalV.n_hl, '\nalpha : ', globalV.alpha, '\nlearning rate : ', globalV.learning_rate)
         for i in range(globalV.n_epochs):
+
             if i%globalV.interval==0:
-                if(print_acc()>98):
-                    print('98% achieved in - ',i,' epochs')
+                if(sma_accuracy()>97.9):
+                    print('97.9% achieved in - ',i,' epochs')
+                    globalV.epochs979.append(i)
+                    failed=False
                     break
-                if (i>50 and find_acc('test')<20) or (i>500 and find_acc('test')<35):
-                    failed=True
-                    break
+
+                elif (sma_accuracy() > 97.7 and firstCross):
+                    print('97.7% achieved in - ', i, ' epochs')
+                    globalV.epochs977.append(i)
+                    firstCross=False
+
+            globalV.test_acc.append(find_acc('test'))
+            print_accuracy()
             train_network(globalV.n_hl)
 
         sess.close()
         if(globalV.writeFile):
-            write_in_file(failed, dir)
-
-        failed=False
+            write_in_file(failed, dir, onlyEpochs)
 
     tf.reset_default_graph()
-        
+
+print(globalV.epochs977)
+print(globalV.epochs979)
+
+
 sec=int(time.time()-start)
 print('TOTAL TIME : ', int(sec/60),'m ', int(sec%60),'s')
 
