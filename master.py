@@ -61,7 +61,7 @@ def find_acc(which_acc):
     return np.mean(acc)
 
 def sma_accuracy():
-    return np.ma.average(globalV.test_acc[-5:])
+    return np.ma.average(globalV.test_acc[-10:])
 
 def print_accuracy():
     print('epoch : ', i+1, '  test_acc : ', globalV.test_acc[-1])
@@ -98,20 +98,26 @@ dir='/nfs/nhome/live/yashm/Desktop/code/git/perturbations/np-hybrid.csv'
 ap = argparse.ArgumentParser()
 ap.add_argument("--learning_rate")
 ap.add_argument("--n_hl")
+ap.add_argument("--hl_size")
 ap.add_argument("--alpha")
 args = vars(ap.parse_args())
 
 globalV.learning_rate=float(args["learning_rate"])
 globalV.n_hl=int(args["n_hl"])
+globalV.hl_size=int(args["hl_size"])
 globalV.alpha=float(args["alpha"])
 
-globalV.n_seeds=2
-globalV.n_epochs=2500
+globalV.n_seeds=5
+globalV.n_epochs=3000
 globalV.writeFile=True
-onlyEpochs=True
+onlyEpochs=False
+failed = True
+if(globalV.n_hl==1 and globalV.alpha<0.1):
+    globalV.batch_size=250
+
 
 for jj in range(globalV.n_seeds):
-    failed = True
+    failed = False
     globalV.resetAcc()
     firstCross=True
     globalV.seed=np.random.randint(0,1000)
@@ -126,8 +132,10 @@ for jj in range(globalV.n_seeds):
         print('TRAINING\nnumber of variables : ', np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()]))
         print('\nwidth : ', globalV.hl_size, '\ndepth : ', globalV.n_hl, '\nalpha : ', globalV.alpha, '\nlearning rate : ', globalV.learning_rate)
         for i in range(globalV.n_epochs):
+            if (i > 250 and globalV.test_acc[-1] < 90):
+                break
 
-            if i%globalV.interval==0:
+            if (i%globalV.interval==0):
                 if(sma_accuracy()>97.9):
                     print('97.9% achieved in - ',i,' epochs')
                     globalV.epochs979.append(i)
@@ -144,10 +152,10 @@ for jj in range(globalV.n_seeds):
             train_network(globalV.n_hl)
 
         sess.close()
-        if(globalV.writeFile):
-            write_in_file(failed, dir, onlyEpochs)
-
     tf.reset_default_graph()
+
+if(globalV.writeFile):
+    write_in_file(failed, dir, onlyEpochs)
 
 print(globalV.epochs977)
 print(globalV.epochs979)

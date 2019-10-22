@@ -29,7 +29,7 @@ class tfGraph:
 
             error_star = tf.reduce_mean(np.square(pred_star - self.Y), 1)
             var = globalV.sigma ** 2
-            k = -(1-globalV.alpha) * globalV.learning_rate * (error_star - error) / var
+            k = -globalV.learning_rate * (error_star - error) / var
 
             for i in range(globalV.n_hl + 1):
                 if (globalV.update_rule == 'ip'):

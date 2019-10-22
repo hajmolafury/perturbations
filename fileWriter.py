@@ -9,17 +9,16 @@ def write_in_file(failed, dir, onlyEpochs):
         writer = csv.writer(csvFile)
         writer.writerow(params)
 
-        if(onlyEpochs):
-            row = globalV.epochs977
-        else:
-            row = globalV.test_acc
-
+        row = globalV.epochs977
+        if(row == None):
+            row = ["Failed"]
+        writer.writerow(row)
+        row = globalV.epochs979
         if (failed):
             row = ["Failed"]
-
         writer.writerow(row)
-        if (onlyEpochs):
-            row = globalV.epochs979
+        if (not failed and not onlyEpochs):
+            row = globalV.test_acc
             writer.writerow(row)
 
         csvFile.flush()
