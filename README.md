@@ -12,6 +12,3 @@ All are optional arguments:
 lr: learning rate
 update_rule: either 'np' or 'sgd'
 network will have (n_hl) depth and constant width of size (hl_size)
-
-## Node Perturbation Hybrid
-One can also chose to train with a hybrid learning rule which is a mix of node perturbation and sgd. The amount of 'hybrid' can be specified by the parameter alpha, with 1 corresponding to (plain) sgd and 0 to (plain) node perturbation.
