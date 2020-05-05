@@ -1,4 +1,17 @@
-# perturbations
-This repository is the implementation of perturbation based algorithms for training neural networks - our main interest lies in evaluating the scalability of node perturbation for hard object recognition tasks.
-By default, the code trains and evaluates the network on MNIST.
-master.py is the main script which creates and trains a multi-layer perceptron with perturbation based methods, which include adding gaussian white noise to the input image (input perturbation) and to the output of a node (node perturbation). One can also chose to train with a hybrid learning rule which is a mix of node perturbation and sgd. The amount of 'hybrid' can be specified by the parameter alpha, with 1 corresponding to (plain) sgd and 0 to (plain) node perturbation.
+# Perturbations
+This repository contains a set of experiments written in Tensorflow (version 1.15) to explore the node perturbation algorithm for training deep and wide neural networks.
+
+## Usage
+
+Run master.py to train a multi-layer perceptron (with sgd or np).
+
+```bash
+python master.py -lr 0.1 -update_rule np -n_hl 3 -hl_size 300 -n_epochs 5
+```
+All are optional arguments:
+lr: learning rate
+update_rule: either 'np' or 'sgd'
+network will have (n_hl) depth and constant width of size (hl_size)
+
+## Node Perturbation Hybrid
+One can also chose to train with a hybrid learning rule which is a mix of node perturbation and sgd. The amount of 'hybrid' can be specified by the parameter alpha, with 1 corresponding to (plain) sgd and 0 to (plain) node perturbation.
