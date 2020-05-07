@@ -5,7 +5,7 @@ This repository contains a set of experiments written in Tensorflow (version 1.1
 
 Run master.py to train a multi-layer perceptron (with sgd or np).
 
-```bash
+```python
 python master.py -lr 0.1 -update_rule np -n_hl 3 -hl_size 300 -n_epochs 5
 ```
 
