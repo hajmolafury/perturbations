@@ -1,8 +1,9 @@
 # Perturbations
 
-This repository contains a set of experiments written in Tensorflow (version 1.15) to explore the node perturbation algorithm for training deep and wide neural networks.
+:exclamation::exclamation: **NOTE**: Here is the [**link**](https://github.com/silverpaths/nodepert) to our new project repository, which is much better documented and contains more comprehensive experiments. The best part is, it's written in **JAX** so it's also much easier to follow!
 
-**NOTE**: Here is the [link](https://github.com/silverpaths/nodepert) to our new project repository, which is much better documented and contains more comprehensive experiments. The best part is, it's written in JAX so it's also much easier to follow!
+This repository contains a set of experiments written in Tensorflow (version 1.x) to explore the node perturbation algorithm for training deep fully connected neural networks.
+
 
 ## Usage
 
